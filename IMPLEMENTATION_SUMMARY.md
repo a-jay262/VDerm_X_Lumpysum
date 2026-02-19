@@ -24,7 +24,7 @@
 
 ### 3. AI Integration
 - ✅ **Gemini AI Service** - Fully configured and tested
-- ✅ **API Key** - Added: AIzaSyCIPWeKGyN0oU63ZTetV17h83ck-S1NlyI
+- ✅ **API Key** - Configured in backend/.env (not exposed publicly)
 - ✅ **Prompt Engineering** - Specialized for cattle disease advice
 - ✅ **Context Awareness** - Links diagnosis data to conversations
 
@@ -106,7 +106,7 @@ EMAIL_PASS=
 EMAIL_SUBJECT=V-DermX Email Verification
 
 # Gemini AI (Active)
-GEMINI_API_KEY=AIzaSyCIPWeKGyN0oU63ZTetV17h83ck-S1NlyI
+GEMINI_API_KEY=your_api_key_here
 
 # Environment
 NODE_ENV=development
