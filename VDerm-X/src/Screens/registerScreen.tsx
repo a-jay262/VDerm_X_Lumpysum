@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { BASE_URL } from "../config";
 
 const RegisterScreen = ({ navigation }: any) => {
@@ -26,6 +27,7 @@ const RegisterScreen = ({ navigation }: any) => {
   const [area, setArea] = useState("");
   const [availability, setAvailability] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     Animated.sequence([
@@ -36,6 +38,30 @@ const RegisterScreen = ({ navigation }: any) => {
       ]),
     ]).start();
   }, []);
+
+  // Password requirement checks
+  const passwordRequirements = {
+    minLength: password.length >= 8,
+    hasLowercase: /[a-z]/.test(password),
+    hasUppercase: /[A-Z]/.test(password),
+    hasNumber: /\d/.test(password),
+    hasSpecialChar: /[@$!%*?&]/.test(password),
+  };
+
+  const allRequirementsMet = Object.values(passwordRequirements).every(req => req === true);
+
+  const PasswordRequirementItem = ({ text, met }: { text: string; met: boolean }) => (
+    <View style={styles.requirementRow}>
+      <Ionicons 
+        name={met ? "checkmark-circle" : "close-circle"} 
+        size={20} 
+        color={met ? "#4CAF50" : "#FF6B6B"} 
+      />
+      <Text style={[styles.requirementText, { color: met ? "#4CAF50" : "#FF6B6B" }]}>
+        {text}
+      </Text>
+    </View>
+  );
 
   const handleSignup = async () => {
     if (!username || !email || !password) {
@@ -57,9 +83,9 @@ const RegisterScreen = ({ navigation }: any) => {
       return;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordRegex.test(password)) {
-      Alert.alert("Error", "Password must meet the complexity requirements.");
+    // Validate password requirements
+    if (!allRequirementsMet) {
+      Alert.alert("Error", "Password must meet all complexity requirements.");
       return;
     }
 
@@ -144,13 +170,38 @@ const RegisterScreen = ({ navigation }: any) => {
             value={email}
             onChangeText={setEmail}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+
+          {/* Password Input with Eye Button */}
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeButton}
+            >
+              <Ionicons 
+                name={showPassword ? "eye" : "eye-off"} 
+                size={24} 
+                color="#259D8A" 
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Password Requirements */}
+          {password.length > 0 && (
+            <View style={styles.requirementsContainer}>
+              <PasswordRequirementItem text="At least 8 characters" met={passwordRequirements.minLength} />
+              <PasswordRequirementItem text="Lowercase letter (a-z)" met={passwordRequirements.hasLowercase} />
+              <PasswordRequirementItem text="Uppercase letter (A-Z)" met={passwordRequirements.hasUppercase} />
+              <PasswordRequirementItem text="Number (0-9)" met={passwordRequirements.hasNumber} />
+              <PasswordRequirementItem text="Special character (@$!%*?&)" met={passwordRequirements.hasSpecialChar} />
+            </View>
+          )}
 
           {/* Role Selection Toggle */}
           <TouchableOpacity 
@@ -216,9 +267,44 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20, backgroundColor: "#F7F8FA" },
   logoContainer: { marginBottom: 30 },
   logo: { width: 120, height: 120, resizeMode: "contain" },
-  formContainer: { width: "100%", maxHeight: "70%", padding: 20, backgroundColor: "#FFFFFF", borderRadius: 10 },
+  formContainer: { width: "100%", maxHeight: "80%", padding: 20, backgroundColor: "#FFFFFF", borderRadius: 10 },
   title: { fontSize: 22, fontWeight: "700", color: "#333", textAlign: "center", marginBottom: 20 },
-  input: { height: 50, backgroundColor: "#F2F2F2", borderRadius: 8, paddingHorizontal: 15, marginBottom: 15 },
+  input: { height: 50, backgroundColor: "#F2F2F2", borderRadius: 8, paddingHorizontal: 15, marginBottom: 15, fontSize: 16, color: "#333" },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F2F2F2",
+    borderRadius: 8,
+    marginBottom: 15,
+    paddingHorizontal: 15,
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    fontSize: 16,
+    color: "#333",
+  },
+  eyeButton: {
+    padding: 10,
+  },
+  requirementsContainer: {
+    backgroundColor: "#F9F9F9",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: "#259D8A",
+  },
+  requirementRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  requirementText: {
+    fontSize: 14,
+    marginLeft: 10,
+    fontWeight: "500",
+  },
   checkboxContainer: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
   checkbox: { width: 24, height: 24, borderWidth: 2, borderColor: "#259D8A", borderRadius: 4, marginRight: 10, justifyContent: "center", alignItems: "center" },
   checkboxChecked: { width: 14, height: 14, backgroundColor: "#259D8A", borderRadius: 2 },

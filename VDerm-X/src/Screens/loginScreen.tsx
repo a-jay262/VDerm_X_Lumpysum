@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { BASE_URL } from "../config";
 import { storeUserData } from "../utils/auth";
 
@@ -21,6 +22,7 @@ const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Animations for logo and form
   useEffect(() => {
@@ -121,14 +123,26 @@ const LoginScreen = ({ navigation }: any) => {
         />
 
         {/* Password Input */}
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#888"
-          value={password}
-          onChangeText={(text) => setPassword(text)}
-          secureTextEntry
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            placeholderTextColor="#888"
+            value={password}
+            onChangeText={(text) => setPassword(text)}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity
+            onPress={() => setShowPassword(!showPassword)}
+            style={styles.eyeButton}
+          >
+            <Ionicons 
+              name={showPassword ? "eye" : "eye-off"} 
+              size={24} 
+              color="#259D8A" 
+            />
+          </TouchableOpacity>
+        </View>
 
         {/* Login Button */}
         <TouchableOpacity 
@@ -193,6 +207,23 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
     color: "#333",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F2F2F2",
+    borderRadius: 8,
+    marginBottom: 15,
+    paddingHorizontal: 15,
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    fontSize: 16,
+    color: "#333",
+  },
+  eyeButton: {
+    padding: 10,
   },
   loginButton: {
     backgroundColor: "#259D8A",

@@ -1,23 +1,37 @@
 // src/ai/gemini.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
 @Injectable()
-export class GeminiService {
+export class GeminiService implements OnModuleInit {
   private readonly logger = new Logger(GeminiService.name);
   private genAI: GoogleGenerativeAI;
   private model: any;
+  private isConfigured = false;
 
   constructor() {
-    if (!process.env.GEMINI_API_KEY) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
       this.logger.warn('⚠️  GEMINI_API_KEY not found in environment variables');
       return;
     }
 
-    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    try {
+      this.genAI = new GoogleGenerativeAI(apiKey);
+      this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      this.isConfigured = true;
+      this.logger.log('✅ Gemini AI service initialized successfully');
+    } catch (error) {
+      this.logger.error('Failed to initialize Gemini AI:', error.message);
+    }
+  }
+
+  onModuleInit() {
+    if (!this.isConfigured) {
+      this.logger.error('❌ Gemini AI service is not configured. Please check GEMINI_API_KEY in .env file');
+    }
   }
 
   private buildSystemPrompt(diagnosisData?: any): string {
@@ -56,8 +70,9 @@ Based on this diagnosis result, provide helpful information and answer the user'
     conversationHistory: any[] = [],
     diagnosisData?: any,
   ): Promise<string> {
-    if (!this.model) {
-      throw new Error('Gemini AI is not configured. Please add GEMINI_API_KEY to .env file');
+    if (!this.isConfigured || !this.model) {
+      this.logger.error('Gemini AI is not configured');
+      return 'I apologize, but the AI service is not properly configured. Please contact the administrator to set up the GEMINI_API_KEY in the environment variables.';
     }
 
     try {

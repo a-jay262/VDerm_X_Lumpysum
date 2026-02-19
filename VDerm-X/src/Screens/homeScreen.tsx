@@ -60,7 +60,7 @@ const HomeScreen = () => {
           text: "Logout",
           onPress: async () => {
             await clearUserData();
-            navigation.replace("Login");
+            navigation.replace("Launch");
           },
         },
       ]
@@ -214,8 +214,8 @@ const HomeScreen = () => {
       ) : activeTab === "Chats" ? (
         <View style={styles.content}>
           <Text style={styles.instructions}>
-            Start a new chat here\nAsk anything about your pet
-          </Text>
+  Start a new chat here{'\n'}Ask anything about your pet 🐾
+</Text>
           <View style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
@@ -350,9 +350,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   instructions: {
-    fontSize: 16,
+    fontSize: 20,
     textAlign: "center",
-    color: "#555",
+    color: "#03410f",
     marginBottom: 20,
   },
   searchContainer: {

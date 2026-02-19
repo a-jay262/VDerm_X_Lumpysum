@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from "react-native";
+import { isLoggedIn } from "../utils/auth";
 
 const LaunchScreen = ({ navigation }: any) => {
   const logoOpacity = useRef(new Animated.Value(0)).current; // For logo fade-in
@@ -8,6 +9,22 @@ const LaunchScreen = ({ navigation }: any) => {
   const textScale = useRef(new Animated.Value(0.8)).current; // For text scaling
 
   useEffect(() => {
+    // Check if user is already logged in
+    const checkLoginStatus = async () => {
+      const loggedIn = await isLoggedIn();
+      if (loggedIn) {
+        // Skip animations and go directly to Home
+        navigation.replace("Home");
+        return;
+      }
+      // User not logged in, show animations
+      runAnimations();
+    };
+
+    checkLoginStatus();
+  }, []);
+
+  const runAnimations = () => {
     Animated.sequence([
       // Logo animation: fade in and slide down
       Animated.parallel([
@@ -36,7 +53,7 @@ const LaunchScreen = ({ navigation }: any) => {
         }),
       ]),
     ]).start();
-  }, []);
+  };
 
   return (
     <View style={styles.container}>
