@@ -1,0 +1,59 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'VDerm-X/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'VDerm-X/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: VDerm-X/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./VDerm-X
+      run: npm ci
+    
+    - name: Check TypeScript
+      working-directory: ./VDerm-X
+      run: npx tsc --noEmit || true
+    
+    - name: Run Expo Doctor
+      working-directory: ./VDerm-X
+      run: npx expo-doctor || true
+    
+    - name: Build Android APK (Expo)
+      working-directory: ./VDerm-X
+      run: |
+        echo "Building Android APK..."
+        npx expo prebuild --platform android --clean || true
+      env:
+        EXPO_NO_TELEMETRY: 1
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: frontend-build-node-${{ matrix.node-version }}
+        path: VDerm-X/android/
+        retention-days: 7

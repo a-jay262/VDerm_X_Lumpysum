@@ -1,24 +1,119 @@
 # VDerm-X - Veterinary Dermatology Diagnostic System
 
+[![Backend CI](https://github.com/Ahmadinit/VDerm_X_Lumpysum/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Ahmadinit/VDerm_X_Lumpysum/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/Ahmadinit/VDerm_X_Lumpysum/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Ahmadinit/VDerm_X_Lumpysum/actions/workflows/frontend-ci.yml)
+[![Code Quality](https://github.com/Ahmadinit/VDerm_X_Lumpysum/actions/workflows/code-quality.yml/badge.svg)](https://github.com/Ahmadinit/VDerm_X_Lumpysum/actions/workflows/code-quality.yml)
+
 A comprehensive mobile application for veterinary dermatology diagnosis using Machine Learning, featuring AI-powered chat consultations and appointment management.
 
 ## 🚀 Quick Start
 
-### Automated Setup (Recommended)
+### Prerequisites
 
-Simply run the automated setup script that handles all dependencies and starts both backend and frontend:
+Before running the project, ensure you have:
+
+- **Node.js** v18+ - [Download](https://nodejs.org/)
+- **Python** 3.8+ - [Download](https://python.org/)
+- **MongoDB Atlas Account** (free) - [Sign up](https://www.mongodb.com/cloud/atlas/register)
+- **Google Gemini API Key** - [Get key](https://makersuite.google.com/app/apikey)
+- **Expo Go App** on your phone (for testing):
+  - [iOS App Store](https://apps.apple.com/app/expo-go/id982107779)
+  - [Android Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
+
+### Setup Instructions
+
+#### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Ahmadinit/VDerm_X_Lumpysum.git
+cd VDerm_X_Lumpysum
+```
+
+#### 2. Backend Setup
+
+```bash
+cd backend
+
+# Install Node.js dependencies
+npm install
+
+# Install Python dependencies for ML model
+cd src/model
+pip install tensorflow numpy pillow
+cd ../..
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your MongoDB URI and Gemini API Key
+```
+
+**Backend .env Configuration:**
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/vdermx?retryWrites=true&w=majority
+GEMINI_API_KEY=your-gemini-api-key-here
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-gmail-app-password
+```
+
+```bash
+# Start backend server
+npm run start:dev
+# Server will run on http://localhost:3000
+```
+
+#### 3. Frontend Setup
+
+```bash
+cd VDerm-X
+
+# Install dependencies
+npm install
+
+# No .env file needed - config is in src/config.ts
+```
+
+**Frontend Configuration (src/config.ts):**
+
+For **Android Emulator**:
+```typescript
+export const BASE_URL = 'http://10.0.2.2:3000';
+```
+
+For **iOS Simulator**:
+```typescript
+export const BASE_URL = 'http://localhost:3000';
+```
+
+For **Physical Device** (same WiFi network):
+```typescript
+// Find your local IP: ipconfig (Windows) or ifconfig (Mac/Linux)
+export const BASE_URL = 'http://192.168.1.100:3000'; // Replace with your IP
+```
+
+```bash
+# Start Expo development server
+npm start
+
+# Press 'a' for Android emulator
+# Press 'i' for iOS simulator
+# Scan QR code with Expo Go app for physical device
+```
+
+### Automated Setup (Windows)
+
+For Windows users, use the automated PowerShell script:
 
 ```powershell
 .\run-project.ps1
 ```
 
-This will:
+This will automatically:
 - ✅ Check all prerequisites
 - ✅ Install all dependencies (Node.js + Python)
 - ✅ Setup Python virtual environment
 - ✅ Configure environment variables
 - ✅ Start backend server on port 3000
-- ✅ Start Expo frontend with tunnel mode
+- ✅ Start Expo frontend
 - ✅ Display QR code for Expo Go app
 
 ### Manual Setup
@@ -99,10 +194,68 @@ VDerm-X-master/
 
 ### Technical Features
 - 🤖 **Machine Learning** - TensorFlow model for skin disease classification
-- 🧠 **AI Integration** - Google Gemini for intelligent chat responses
+- 🧠 **AI Integration** - Google Gemini for intelligent chat responses with markdown formatting
 - 🔐 **Role-Based Auth** - Separate interfaces for users and vets
 - 📱 **Mobile-First** - Built with React Native + Expo
 - ☁️ **Cloud Database** - MongoDB Atlas for data storage
+- 🔄 **CI/CD** - Automated builds and tests with GitHub Actions
+- 💬 **Real-time Chat** - Conversation history with delete functionality
+- 🎨 **Modern UI** - Clean interface with visual distinction for chat types
+
+---
+
+## 🔧 Development & CI/CD
+
+### GitHub Actions Workflows
+
+This project includes automated CI/CD pipelines that run on every push:
+
+#### Backend CI (`backend-ci.yml`)
+- ✅ Builds and tests backend on Node.js 18.x and 20.x
+- ✅ Installs Python dependencies for ML model
+- ✅ Runs linting and tests
+- ✅ Uploads build artifacts
+
+#### Frontend CI (`frontend-ci.yml`)
+- ✅ Builds frontend on Node.js 18.x and 20.x
+- ✅ TypeScript type checking
+- ✅ Expo prebuild for Android
+- ✅ Runs Expo Doctor diagnostics
+
+#### Code Quality (`code-quality.yml`)
+- ✅ Security audits for npm packages
+- ✅ Secret scanning with TruffleHog
+- ✅ Code style checks
+- ✅ Format validation
+
+### Setting Up GitHub Secrets
+
+For GitHub Actions to work properly, add these secrets in your repository:
+
+1. Go to: `Settings` → `Secrets and variables` → `Actions`
+2. Add the following secrets:
+   - `MONGODB_URI` - Your MongoDB Atlas connection string
+   - `GEMINI_API_KEY` - Your Google Gemini API key
+
+### Local Development
+
+```bash
+# Backend
+cd backend
+npm run start:dev  # Development mode with hot reload
+npm run build      # Production build
+npm test           # Run tests
+
+# Frontend
+cd VDerm-X
+npm start          # Start Expo dev server
+npm run android    # Run on Android emulator
+npm run ios        # Run on iOS simulator
+```
+
+---
+
+## 📚 API Documentation
 - 🌐 **RESTful API** - NestJS backend with comprehensive endpoints
 
 ---

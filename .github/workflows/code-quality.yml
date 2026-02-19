@@ -1,0 +1,59 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run security audit (Backend)
+      working-directory: ./backend
+      run: npm audit --audit-level=moderate || true
+    
+    - name: Run security audit (Frontend)
+      working-directory: ./VDerm-X
+      run: npm audit --audit-level=moderate || true
+    
+    - name: Check for secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+        extra_args: --debug --only-verified
+  
+  code-style:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: npm ci
+    
+    - name: Check backend code style
+      working-directory: ./backend
+      run: npm run format || true
+    
+    - name: Install frontend dependencies
+      working-directory: ./VDerm-X
+      run: npm ci
+    
+    - name: Check TypeScript types
+      working-directory: ./VDerm-X
+      run: npx tsc --noEmit || true

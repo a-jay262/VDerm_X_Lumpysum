@@ -1,5 +1,4 @@
-// Backend API URL - Using ngrok for cross-network access  
-// For same WiFi network, use: http://172.20.48.1:3000
-// For hotspot/different networks, use tunnel URL below:
-// Updated: Using ngrok tunnel (no warning pages after first visit)
-export const BASE_URL = 'https://17ff-119-63-139-248.ngrok-free.app';
+// Backend API URL Configuration
+// For local development: Use http://localhost:3000 (Android emulator) or http://YOUR_IP:3000 (physical device on same network)
+// For production: Replace with your deployed backend URL
+export const BASE_URL = 'http://localhost:3000';
