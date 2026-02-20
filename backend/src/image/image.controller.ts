@@ -141,7 +141,7 @@ export class ImageControllerr {
       }
 
       // Use system Python directly (not virtual environment)
-      const pythonPath = 'python3'; // or 'python' on Windows
+      const pythonPath = process.env.NODE_ENV === 'production' ? 'python' : 'python3'; // or 'python' on Windows
       console.log('Using Python:', pythonPath);
       
       // Ensure Python script runs with UTF-8 encoding by setting the environment variable

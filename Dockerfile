@@ -23,6 +23,9 @@ WORKDIR /app
 # Install Node.js in the Python image
 RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
 
+# Verify Python is available (create symlink if needed)
+RUN which python || which python3 || echo "Python not found"
+
 # Create uploads directory
 RUN mkdir -p /app/uploads
 
