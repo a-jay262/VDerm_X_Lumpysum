@@ -16,7 +16,7 @@ COPY backend/ ./
 RUN npm run build
 
 # Runtime stage - TensorFlow official image with Python and Node.js
-FROM tensorflow/tensorflow:2.13.0-py310
+FROM tensorflow/tensorflow:2.13.0
 
 WORKDIR /app
 
