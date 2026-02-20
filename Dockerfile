@@ -15,22 +15,24 @@ COPY backend/ ./
 # Build TypeScript
 RUN npm run build
 
-# Runtime stage - Node.js on Debian with Python support
-FROM node:18-bullseye
+# Runtime stage - TensorFlow official image with Python and Node.js
+FROM tensorflow/tensorflow:2.13.0-py310
 
 WORKDIR /app
 
-# Install Python and required build tools for pip packages
+# Install Node.js on top of the TensorFlow image
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends python3 python3-pip && \
+    apt-get install -y --no-install-recommends curl && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Verify installations - this helps debug build issues
+# Verify installations
 RUN echo "=== Installation Verification ===" && \
     which python3 && \
     python3 --version && \
-    pip3 --version && \
+    python3 -c "import tensorflow; print('TensorFlow version:', tensorflow.__version__)" && \
     node --version && \
     npm --version && \
     echo "=== All checks passed ==="
@@ -42,9 +44,6 @@ COPY --from=builder /build/package.json ./
 
 # Copy the model files and Python scripts
 COPY backend/src/model/ ./src/model/
-
-# Install Python dependencies for the ML model
-RUN pip3 install --no-cache-dir tensorflow pillow numpy
 
 # Create uploads directory
 RUN mkdir -p /app/uploads

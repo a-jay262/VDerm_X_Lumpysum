@@ -140,9 +140,9 @@ export class ImageControllerr {
         throw new Error(`Python script not found at path: ${pythonScript}`);
       }
 
-      // Use python3 command directly - let exec handle if it doesn't exist
-      const pythonPath = 'python3';
-      console.log('Using Python command:', pythonPath);
+      // Use absolute path to python3 - more reliable than relying on PATH
+      const pythonPath = '/usr/bin/python3';
+      console.log('Using Python at:', pythonPath);
       
       // Ensure Python script runs with UTF-8 encoding by setting the environment variable
       const command = `${pythonPath} "${pythonScript}" "${tempFilePath}"`;
