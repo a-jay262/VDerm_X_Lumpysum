@@ -23,7 +23,7 @@ WORKDIR /app
 # Install Python and required build tools for pip packages
 RUN apt-get update && \
     apt-get install -y python3 python3-pip && \
-    ln -sf $(which python3) /usr/bin/python3 && \
+    ln -sf $(which python3) /usr/local/bin/python3 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Verify installations - this helps debug build issues

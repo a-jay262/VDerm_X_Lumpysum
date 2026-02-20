@@ -145,13 +145,7 @@ export class ImageControllerr {
       // console.log('Using Python at:', pythonPath);
       // import { execSync } from 'child_process';
 
-const pythonPath = process.env.PYTHON_PATH || (() => {
-  try {
-    return execSync('which python3').toString().trim();
-  } catch {
-    throw new Error('Python executable not found in PATH');
-  }
-})();
+const pythonPath = process.env.PYTHON_PATH || '/usr/local/bin/python3';
 console.log('Using Python at:', pythonPath);
       
       // Verify Python exists before running
