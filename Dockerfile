@@ -20,6 +20,8 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache python3 py3-pip
+
 # Copy only production dependencies
 COPY --from=builder /build/node_modules ./node_modules
 COPY --from=builder /build/dist ./dist
