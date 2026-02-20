@@ -71,7 +71,7 @@ export class ImageControllerr {
 import { Controller, Post, UploadedFile, UseInterceptors, Headers } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';  // For creating temporary files
@@ -141,7 +141,8 @@ export class ImageControllerr {
       }
 
       // Use absolute path to python3 for reliability
-      const pythonPath = '/usr/bin/python3'; // Alpine Linux path
+      // const pythonPath = '/usr/bin/python3'; // Alpine Linux path
+      const pythonPath = process.env.PYTHON_PATH || execSync('which python3').toString().trim();
       console.log('Using Python at:', pythonPath);
       
       // Verify Python exists before running
