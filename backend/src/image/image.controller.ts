@@ -126,11 +126,14 @@ export class ImageControllerr {
       console.log("Temporary file created at:", tempFilePath);
 
       // Resolve the Python script path dynamically
-      const pythonScript = path.resolve(
-        __dirname,
-        process.env.NODE_ENV === 'production' ? '../model/predict.py' : '../../src/model/predict.py'
-      );
+      // In production: /app/src/model/predict.py
+      // In development: ../../src/model/predict.py
+      const pythonScript = process.env.NODE_ENV === 'production' 
+        ? '/app/src/model/predict.py'
+        : path.resolve(__dirname, '../../src/model/predict.py');
+      
       console.log('Resolved Python script path:', pythonScript);
+      console.log('NODE_ENV:', process.env.NODE_ENV);
 
       if (!fs.existsSync(pythonScript)) {
         console.error(`Python script not found at path: ${pythonScript}`);  // Log if the script is not found
@@ -145,7 +148,15 @@ export class ImageControllerr {
       const command = `${pythonPath} "${pythonScript}" "${tempFilePath}"`;
 
       const prediction = await new Promise<string>((resolve, reject) => {
-        exec(command, { encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8', MODEL_PATH: path.resolve(__dirname, '../../src/model') } }, (error, stdout, stderr) => {
+        const modelPath = process.env.NODE_ENV === 'production' ? '/app/src/model' : path.resolve(__dirname, '../../src/model');
+        exec(command, { 
+          encoding: 'utf8', 
+          env: { 
+            ...process.env, 
+            PYTHONIOENCODING: 'utf-8', 
+            MODEL_PATH: modelPath 
+          } 
+        }, (error, stdout, stderr) => {
           if (error) {
             console.error("Python script execution error:", stderr || error.message);  // Log script errors
             reject(`Error: ${stderr || error.message}`);
