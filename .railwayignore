@@ -1,0 +1,5 @@
+models/
+VDerm-X/
+backend/model/
+*.py
+requirements.txt
