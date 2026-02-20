@@ -1,5 +1,9 @@
-models/
+# Ignore frontend
 VDerm-X/
+
+# Ignore Python model files and requirements
 backend/model/
+backend/scripts/
+backend/requirements.txt
+models/
 *.py
-requirements.txt
