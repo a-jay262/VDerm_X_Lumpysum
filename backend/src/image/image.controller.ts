@@ -106,8 +106,16 @@ export class ImageControllerr {
         return { error: 'No file uploaded.' };
       }
 
-      const filePath = path.join(__dirname, '..', '..', 'uploads', file.filename);
+      // Use the path provided by multer (relative to cwd)
+      // In production, file.path will be the correct path set by multer
+      const filePath = path.resolve(process.cwd(), file.path);
       console.log("File path:", filePath);  // Log the file path
+
+      // Verify file exists
+      if (!fs.existsSync(filePath)) {
+        console.error(`File not found at: ${filePath}`);
+        throw new Error(`Uploaded file not found at: ${filePath}`);
+      }
 
       const imageData = fs.readFileSync(filePath);
       console.log("Image data read successfully");

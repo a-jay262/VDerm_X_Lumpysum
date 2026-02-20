@@ -23,6 +23,9 @@ WORKDIR /app
 # Install Node.js in the Python image
 RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
 
+# Create uploads directory
+RUN mkdir -p /app/uploads
+
 # Copy only production Node dependencies
 COPY --from=builder /build/node_modules ./node_modules
 COPY --from=builder /build/dist ./dist
