@@ -21,6 +21,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 RUN apk add --no-cache python3 py3-pip
+RUN pip3 install pillow
 
 # Copy only production dependencies
 COPY --from=builder /build/node_modules ./node_modules
