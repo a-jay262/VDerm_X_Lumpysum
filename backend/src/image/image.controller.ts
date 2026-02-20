@@ -140,19 +140,9 @@ export class ImageControllerr {
         throw new Error(`Python script not found at path: ${pythonScript}`);
       }
 
-      // Use absolute path to python3 for reliability
-      // const pythonPath = '/usr/bin/python3'; // Alpine Linux path
-      // console.log('Using Python at:', pythonPath);
-      // import { execSync } from 'child_process';
-
-const pythonPath = process.env.PYTHON_PATH || '/usr/local/bin/python3';
-console.log('Using Python at:', pythonPath);
-      
-      // Verify Python exists before running
-      if (!fs.existsSync(pythonPath)) {
-        console.error(`Python not found at: ${pythonPath}`);
-        throw new Error(`Python executable not found at: ${pythonPath}`);
-      }
+      // Use python3 command directly - let exec handle if it doesn't exist
+      const pythonPath = 'python3';
+      console.log('Using Python command:', pythonPath);
       
       // Ensure Python script runs with UTF-8 encoding by setting the environment variable
       const command = `${pythonPath} "${pythonScript}" "${tempFilePath}"`;
