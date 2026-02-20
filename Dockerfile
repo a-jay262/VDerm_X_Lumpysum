@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:18-bullseye AS builder
 
 WORKDIR /build
 
@@ -15,17 +15,27 @@ COPY backend/ ./
 # Build TypeScript
 RUN npm run build
 
-# Runtime stage - Node.js with Python installed
-FROM node:18-alpine
+# Runtime stage - Node.js on Debian with Python support
+FROM node:18-bullseye
 
 WORKDIR /app
 
-# Install Python and dependencies in Alpine
-RUN apk add --no-cache python3 py3-pip
+# Install Python and required build tools for pip packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Verify installations - this helps debug build issues
-RUN echo "Python location:" && which python3 && ls -la /usr/bin/python* || echo "Python not found"
-RUN python3 --version && node --version && npm --version
+RUN echo "=== Installation Verification ===" && \
+    which python3 && \
+    python3 --version && \
+    pip3 --version && \
+    node --version && \
+    npm --version && \
+    echo "=== All checks passed ==="
 
 # Copy only production Node dependencies
 COPY --from=builder /build/node_modules ./node_modules
