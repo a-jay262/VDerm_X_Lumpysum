@@ -106,7 +106,7 @@ export class ImageControllerr {
         return { error: 'No file uploaded.' };
       }
 
-      const filePath = path.join(__dirname, '..', '..', 'uploads', file.originalname);
+      const filePath = path.join(__dirname, '..', '..', 'uploads', file.filename);
       console.log("File path:", filePath);  // Log the file path
 
       const imageData = fs.readFileSync(filePath);
