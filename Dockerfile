@@ -7,7 +7,7 @@ WORKDIR /build
 COPY backend/package.json backend/package-lock.json ./
 
 # Install all dependencies (including dev for build)
-RUN npm ci
+RUN npm install
 
 # Copy all backend source code and config
 COPY backend/ ./
