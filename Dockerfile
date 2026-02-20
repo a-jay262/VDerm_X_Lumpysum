@@ -15,19 +15,19 @@ COPY backend/ ./
 # Build TypeScript
 RUN npm run build
 
-# Runtime stage - includes Python for ML model  
+# Runtime stage - use Python slim which has both Python and can install Node  
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install Node.js in the Python image
-RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
+# Install Node.js using apt
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends nodejs npm && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Verify Python is available (create symlink if needed)
-RUN which python || which python3 || echo "Python not found"
-
-# Create uploads directory
-RUN mkdir -p /app/uploads
+# Verify Python and Node are available
+RUN python3 --version && node --version && npm --version
 
 # Copy only production Node dependencies
 COPY --from=builder /build/node_modules ./node_modules
@@ -40,11 +40,15 @@ COPY backend/src/model/ ./src/model/
 # Install Python dependencies for the ML model
 RUN pip install --no-cache-dir tensorflow pillow numpy
 
+# Create uploads directory
+RUN mkdir -p /app/uploads
+
 EXPOSE 3000
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV MODEL_PATH=/app/src/model
+ENV PYTHONUNBUFFERED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

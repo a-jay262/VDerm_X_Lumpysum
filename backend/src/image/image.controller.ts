@@ -140,8 +140,8 @@ export class ImageControllerr {
         throw new Error(`Python script not found at path: ${pythonScript}`);
       }
 
-      // Use system Python directly (not virtual environment)
-      const pythonPath = process.env.NODE_ENV === 'production' ? 'python' : 'python3'; // or 'python' on Windows
+      // Use system Python directly
+      const pythonPath = 'python3'; // python:3.11-slim has python3 available
       console.log('Using Python:', pythonPath);
       
       // Ensure Python script runs with UTF-8 encoding by setting the environment variable
