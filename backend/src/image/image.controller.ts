@@ -120,7 +120,7 @@ export class ImageControllerr {
       // Resolve the Python script path dynamically
       const pythonScript = path.resolve(
         __dirname,
-        process.env.NODE_ENV === 'production' ? '../scripts/predict.py' : '../../src/scripts/predict.py'
+        process.env.NODE_ENV === 'production' ? '../model/predict.py' : '../../src/model/predict.py'
       );
       console.log('Resolved Python script path:', pythonScript);
 
@@ -129,15 +129,15 @@ export class ImageControllerr {
         throw new Error(`Python script not found at path: ${pythonScript}`);
       }
 
-      // Use Python from virtual environment
-      const pythonPath = path.resolve(__dirname, '..', '..', '..', '.venv', 'Scripts', 'python.exe');
-      console.log('Using Python from:', pythonPath);
+      // Use system Python directly (not virtual environment)
+      const pythonPath = 'python3'; // or 'python' on Windows
+      console.log('Using Python:', pythonPath);
       
       // Ensure Python script runs with UTF-8 encoding by setting the environment variable
-      const command = `"${pythonPath}" "${pythonScript}" "${tempFilePath}"`;
+      const command = `${pythonPath} "${pythonScript}" "${tempFilePath}"`;
 
       const prediction = await new Promise<string>((resolve, reject) => {
-        exec(command, { encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' } }, (error, stdout, stderr) => {
+        exec(command, { encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8', MODEL_PATH: path.resolve(__dirname, '../../src/model') } }, (error, stdout, stderr) => {
           if (error) {
             console.error("Python script execution error:", stderr || error.message);  // Log script errors
             reject(`Error: ${stderr || error.message}`);

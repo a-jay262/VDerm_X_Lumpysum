@@ -15,15 +15,24 @@ COPY backend/ ./
 # Build TypeScript
 RUN npm run build
 
-# Runtime stage  
-FROM node:18-alpine
+# Runtime stage - includes Python for ML model  
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy only production dependencies
+# Install Node.js in the Python image
+RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
+
+# Copy only production Node dependencies
 COPY --from=builder /build/node_modules ./node_modules
 COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/package.json ./
+
+# Copy the model files and Python scripts
+COPY backend/src/model/ ./src/model/
+
+# Install Python dependencies for the ML model
+RUN pip install --no-cache-dir tensorflow pillow numpy
 
 EXPOSE 3000
 
