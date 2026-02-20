@@ -141,7 +141,7 @@ export class ImageControllerr {
       }
 
       // Use absolute path to python3 - more reliable than relying on PATH
-      const pythonPath = '/usr/bin/python3';
+      const pythonPath = 'python';
       console.log('Using Python at:', pythonPath);
       
       // Ensure Python script runs with UTF-8 encoding by setting the environment variable
