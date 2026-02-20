@@ -142,8 +142,17 @@ export class ImageControllerr {
 
       // Use absolute path to python3 for reliability
       // const pythonPath = '/usr/bin/python3'; // Alpine Linux path
-      const pythonPath = process.env.PYTHON_PATH || execSync('which python3').toString().trim();
-      console.log('Using Python at:', pythonPath);
+      // console.log('Using Python at:', pythonPath);
+      // import { execSync } from 'child_process';
+
+const pythonPath = process.env.PYTHON_PATH || (() => {
+  try {
+    return execSync('which python3').toString().trim();
+  } catch {
+    throw new Error('Python executable not found in PATH');
+  }
+})();
+console.log('Using Python at:', pythonPath);
       
       // Verify Python exists before running
       if (!fs.existsSync(pythonPath)) {
