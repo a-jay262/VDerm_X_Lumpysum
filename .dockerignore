@@ -14,7 +14,6 @@ build
 .env.*.local
 models/
 VDerm-X/
-backend/model/
 backend/scripts/
 backend/uploads/
 backend/dist/
