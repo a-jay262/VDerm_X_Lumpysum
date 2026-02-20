@@ -38,7 +38,7 @@ jobs:
     
     - name: Install backend dependencies
       working-directory: ./backend
-      run: npm install
+      run: npm ci
     
     - name: Install Python dependencies
       working-directory: ./backend/src/model

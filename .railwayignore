@@ -1,9 +1,5 @@
-# Ignore frontend
+package.json
+package-lock.json
+node_modules/
 VDerm-X/
-
-# Ignore Python model files and requirements
-backend/model/
-backend/scripts/
-backend/requirements.txt
 models/
-*.py
