@@ -15,18 +15,15 @@ COPY backend/ ./
 # Build TypeScript
 RUN npm run build
 
-# Runtime stage - use Python slim which has both Python and can install Node  
-FROM python:3.11-slim
+# Runtime stage - Node.js with Python installed
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Install Node.js using apt
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends nodejs npm && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install Python and dependencies in Alpine
+RUN apk add --no-cache python3 py3-pip
 
-# Verify Python and Node are available
+# Verify installations
 RUN python3 --version && node --version && npm --version
 
 # Copy only production Node dependencies
@@ -38,7 +35,7 @@ COPY --from=builder /build/package.json ./
 COPY backend/src/model/ ./src/model/
 
 # Install Python dependencies for the ML model
-RUN pip install --no-cache-dir tensorflow pillow numpy
+RUN pip3 install --no-cache-dir tensorflow pillow numpy
 
 # Create uploads directory
 RUN mkdir -p /app/uploads
