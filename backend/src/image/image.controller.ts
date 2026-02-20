@@ -140,28 +140,43 @@ export class ImageControllerr {
         throw new Error(`Python script not found at path: ${pythonScript}`);
       }
 
-      // Use system Python directly
-      const pythonPath = 'python3'; // python:3.11-slim has python3 available
-      console.log('Using Python:', pythonPath);
+      // Use absolute path to python3 for reliability
+      const pythonPath = '/usr/bin/python3'; // Alpine Linux path
+      console.log('Using Python at:', pythonPath);
+      
+      // Verify Python exists before running
+      if (!fs.existsSync(pythonPath)) {
+        console.error(`Python not found at: ${pythonPath}`);
+        throw new Error(`Python executable not found at: ${pythonPath}`);
+      }
       
       // Ensure Python script runs with UTF-8 encoding by setting the environment variable
       const command = `${pythonPath} "${pythonScript}" "${tempFilePath}"`;
 
       const prediction = await new Promise<string>((resolve, reject) => {
         const modelPath = process.env.NODE_ENV === 'production' ? '/app/src/model' : path.resolve(__dirname, '../../src/model');
+        const env = { 
+          ...process.env, 
+          PYTHONIOENCODING: 'utf-8', 
+          MODEL_PATH: modelPath,
+          PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+        };
+        
+        console.log('Executing command:', command);
+        console.log('With environment PATH:', env.PATH);
+        
         exec(command, { 
           encoding: 'utf8', 
-          env: { 
-            ...process.env, 
-            PYTHONIOENCODING: 'utf-8', 
-            MODEL_PATH: modelPath 
-          } 
+          env,
+          shell: '/bin/sh'
         }, (error, stdout, stderr) => {
           if (error) {
-            console.error("Python script execution error:", stderr || error.message);  // Log script errors
+            console.error("Python execution error:", error.message);
+            console.error("stderr:", stderr);
+            console.error("stdout:", stdout);
             reject(`Error: ${stderr || error.message}`);
           }
-          console.log("Prediction result:", stdout);  // Log the prediction result
+          console.log("Prediction result:", stdout);
           resolve(stdout);
         });
       });

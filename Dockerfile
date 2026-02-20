@@ -23,7 +23,8 @@ WORKDIR /app
 # Install Python and dependencies in Alpine
 RUN apk add --no-cache python3 py3-pip
 
-# Verify installations
+# Verify installations - this helps debug build issues
+RUN echo "Python location:" && which python3 && ls -la /usr/bin/python* || echo "Python not found"
 RUN python3 --version && node --version && npm --version
 
 # Copy only production Node dependencies
