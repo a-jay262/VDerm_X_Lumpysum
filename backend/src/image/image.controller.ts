@@ -1,73 +1,3 @@
-/*import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import * as multer from 'multer';
-import { exec } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';  // For creating temporary files
-
-@Controller('images')
-export class ImageControllerr {
-  @Post('predicts')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: multer.diskStorage({
-        destination: './uploads',
-        filename: (req, file, callback) => {
-          callback(null, file.originalname);
-        },
-      }),
-      limits: { fileSize: 10 * 1024 * 1024 }, // Max file size: 10MB
-    }),
-  )
-  async predict(@UploadedFile() file) {
-    try {
-      if (!file) {
-        return { error: 'No file uploaded.' };
-      }
-
-      const filePath = path.join(__dirname, '..', '..', 'uploads', file.originalname);
-      const imageData = fs.readFileSync(filePath);
-
-      // Create a temporary file to store the image
-      const tempFilePath = path.join(os.tmpdir(), 'temp_image.jpg');
-      fs.writeFileSync(tempFilePath, imageData);  // Write the image to the temp file
-
-      // Resolve the Python script path dynamically
-      const pythonScript = path.resolve(
-        __dirname,
-        process.env.NODE_ENV === 'production' ? '../scripts/predict.py' : '../../src/scripts/predict.py'
-      );
-      console.log('Resolved Python script path:', pythonScript);
-
-      if (!fs.existsSync(pythonScript)) {
-        throw new Error(`Python script not found at path: ${pythonScript}`);
-      }
-
-      // Execute the Python script and pass the path to the temporary image file
-      const command = `python ${pythonScript} "${tempFilePath}"`;
-
-      const prediction = await new Promise<string>((resolve, reject) => {
-        exec(command, (error, stdout, stderr) => {
-          if (error) {
-            reject(`Error: ${stderr || error.message}`);
-          }
-          resolve(stdout);
-        });
-      });
-
-      // Clean up temporary file
-      fs.unlinkSync(tempFilePath);  // Remove the temporary file after execution
-
-      return { prediction: JSON.parse(prediction) };
-
-    } catch (error) {
-      console.error(error);
-      return { error: error.message || 'An error occurred while processing the image.' };
-    }
-  }
-}*/
-
 import {
   Controller,
   Post,
@@ -77,10 +7,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
-import { exec, execSync } from 'child_process';
+import { exec } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os'; // For creating temporary files
+import * as os from 'os';
 import { DiagnosisService } from '../diagnosis/diagnosis.service';
 
 @Controller('images')
@@ -97,24 +27,21 @@ export class ImageControllerr {
           callback(null, uniqueName);
         },
       }),
-      limits: { fileSize: 10 * 1024 * 1024 }, // Max file size: 10MB
+      limits: { fileSize: 10 * 1024 * 1024 },
     }),
   )
   async predict(@UploadedFile() file, @Headers('x-user-id') userId?: string) {
     try {
-      console.log('Received file:', file); // Log the uploaded file
+      console.log('Received file:', file);
 
       if (!file) {
-        console.error('No file uploaded.'); // Log when no file is uploaded
+        console.error('No file uploaded.');
         return { error: 'No file uploaded.' };
       }
 
-      // Use the path provided by multer (relative to cwd)
-      // In production, file.path will be the correct path set by multer
       const filePath = path.resolve(process.cwd(), file.path);
-      console.log('File path:', filePath); // Log the file path
+      console.log('File path:', filePath);
 
-      // Verify file exists
       if (!fs.existsSync(filePath)) {
         console.error(`File not found at: ${filePath}`);
         throw new Error(`Uploaded file not found at: ${filePath}`);
@@ -123,93 +50,78 @@ export class ImageControllerr {
       const imageData = fs.readFileSync(filePath);
       console.log('Image data read successfully');
 
-      // Create a temporary file to store the image
       const tempFilePath = path.join(os.tmpdir(), 'temp_image.jpg');
-      fs.writeFileSync(tempFilePath, imageData); // Write the image to the temp file
+      fs.writeFileSync(tempFilePath, imageData);
       console.log('Temporary file created at:', tempFilePath);
 
-      // Resolve the Python script path dynamically
-      // In production: /app/src/model/predict.py
-      // In development: ../../src/model/predict.py
-      // const pythonScript =
-      //   process.env.NODE_ENV === 'production'
-      //     ? '/app/src/model/predict.py'
-      //     : path.resolve(__dirname, '../../src/model/predict.py');
+      // Determine if running in production (Render) or development
+      const isProduction = process.env.NODE_ENV === 'production';
+      const isWindows = process.platform === 'win32';
 
-      // Resolve Python script
-      // const pythonScript =
-      //   process.env.NODE_ENV === 'production' && process.platform !== 'win32'
-      //     ? '/app/src/model/predict.py' // production Docker/Linux
-      //     : path.resolve(__dirname, '..', '..', 'src', 'model', 'predict.py'); // Windows dev
-
-      // Fix: Use Windows paths for development even if NODE_ENV=production
-      const isProduction =
-        process.env.NODE_ENV === 'production' && process.platform !== 'win32';
-
+      // Python script path
       const pythonScript = isProduction
-        ? '/app/src/model/predict.py'
+        ? '/app/src/model/predict.py'  // Render path
         : path.resolve(__dirname, '..', '..', 'src', 'model', 'predict.py');
 
       console.log('Resolved Python script path:', pythonScript);
       console.log('NODE_ENV:', process.env.NODE_ENV);
+      console.log('Platform:', process.platform);
 
       if (!fs.existsSync(pythonScript)) {
-        console.error(`Python script not found at path: ${pythonScript}`); // Log if the script is not found
+        console.error(`Python script not found at path: ${pythonScript}`);
         throw new Error(`Python script not found at path: ${pythonScript}`);
       }
 
-      // Use absolute path to python3 - more reliable than relying on PATH
-      // const pythonPath =
-      //   process.env.NODE_ENV === 'production'
-      //     ? '/venv/bin/python' // venv Python
-      //     : 'python'; // local dev Python
-      // const pythonPath =
-      //   process.platform === 'win32'
-      //     ? 'python' // Use Windows PATH python
-      //     : '/venv/bin/python';
-      // console.log('Using Python at:', pythonPath);
+      // FIX: Determine Python executable path based on environment
+      let pythonExecutable: string;
+      
+      if (isProduction) {
+        // Render/Linux production - use the venv path from Docker
+        pythonExecutable = '/opt/venv/bin/python';
+      } else {
+        // Development environment
+        if (isWindows) {
+          // Windows development
+          pythonExecutable = path.resolve(
+            __dirname,
+            '..',
+            '..',
+            'venv',
+            'Scripts',
+            'python.exe'
+          );
+        } else {
+          // Linux/Mac development
+          pythonExecutable = 'python3';
+        }
+      }
 
-      const pythonPath = require('path').resolve(
-        __dirname,
-        '..',
-        '..',
-        'venv',
-        'Scripts',
-        'python.exe',
-      );
+      console.log('Using Python executable:', pythonExecutable);
 
-      // Ensure Python script runs with UTF-8 encoding by setting the environment variable
-      const command = `${pythonPath} "${pythonScript}" "${tempFilePath}"`;
+      // Model path
+      const modelPath = isProduction
+        ? '/app/src/model'
+        : path.resolve(__dirname, '..', '..', 'src', 'model');
+
+      const modelFile = path.join(modelPath, 'final_model.keras');
+      console.log('Looking for model at:', modelFile);
+
+      // Build command
+      const command = `"${pythonExecutable}" "${pythonScript}" "${tempFilePath}"`;
+      console.log('Executing command:', command);
 
       const prediction = await new Promise<string>((resolve, reject) => {
-        // const modelPath =
-        //   process.env.NODE_ENV === 'production'
-        //     ? '/app/src/model'
-        //     : path.resolve(__dirname, '../../src/model');
-
-        const modelPath = isProduction
-          ? '/app/src/model'
-          : path.resolve(__dirname, '..', '..', 'src', 'model');
-
-        const modelFile = path.join(modelPath, 'final_model.keras');
-        console.log('Looking for model at:', modelFile);
-
         const env = {
           ...process.env,
           PYTHONIOENCODING: 'utf-8',
           MODEL_PATH: modelPath,
-          // PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
         };
-
-        console.log('Executing command:', command);
-        // console.log('With environment PATH:', env.PATH);
 
         exec(
           command,
           {
             encoding: 'utf8',
             env,
-            // shell: '/bin/sh'
           },
           (error, stdout, stderr) => {
             if (error) {
@@ -225,16 +137,15 @@ export class ImageControllerr {
       });
 
       // Clean up temporary file
-      fs.unlinkSync(tempFilePath); // Remove the temporary file after execution
+      fs.unlinkSync(tempFilePath);
       console.log('Temporary file removed');
 
-      // Parse the JSON output
-      // const predictionData = JSON.parse(prediction);
-
       console.log('RAW Python output:', prediction);
+      
       try {
         const predictionData = JSON.parse(prediction);
         let diagnosisId = null;
+        
         if (userId) {
           try {
             const imageUrl = `uploads/${file.filename}`;
@@ -256,7 +167,6 @@ export class ImageControllerr {
                 ? diagnosisError.message
                 : String(diagnosisError);
             console.error('Failed to save diagnosis:', errorMessage);
-            // Don't fail the request if diagnosis saving fails
           }
         }
 
@@ -269,9 +179,8 @@ export class ImageControllerr {
         throw err;
       }
 
-      // Auto-save diagnosis if userId is provided
     } catch (error) {
-      console.error('Error during image processing:', error); // Log detailed error information
+      console.error('Error during image processing:', error);
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       return {
