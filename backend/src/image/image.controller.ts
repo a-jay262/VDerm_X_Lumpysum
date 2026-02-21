@@ -141,7 +141,9 @@ export class ImageControllerr {
       }
 
       // Use absolute path to python3 - more reliable than relying on PATH
-      const pythonPath = 'python3';
+      const pythonPath = process.env.NODE_ENV === 'production' 
+  ? 'python3'
+  : 'python';
       console.log('Using Python at:', pythonPath);
       
       // Ensure Python script runs with UTF-8 encoding by setting the environment variable
@@ -153,7 +155,7 @@ export class ImageControllerr {
           ...process.env, 
           PYTHONIOENCODING: 'utf-8', 
           MODEL_PATH: modelPath,
-          PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+          // PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
         };
         
         console.log('Executing command:', command);
@@ -162,7 +164,7 @@ export class ImageControllerr {
         exec(command, { 
           encoding: 'utf8', 
           env,
-          shell: '/bin/sh'
+          // shell: '/bin/sh'
         }, (error, stdout, stderr) => {
           if (error) {
             console.error("Python execution error:", error.message);
