@@ -1,44 +1,3 @@
-# # Build stage
-# FROM node:18-alpine AS builder
-
-# WORKDIR /build
-
-# # Copy package files
-# COPY package.json package-lock.json ./
-
-# # Install all dependencies (including dev for build)
-# RUN npm install
-
-# # Copy all source code and config
-# COPY . ./
-
-# # Build TypeScript
-# RUN npm run build
-
-# # Runtime stage  
-# FROM node:18-alpine
-
-# WORKDIR /app
-
-# RUN apk add --no-cache python3 py3-pip
-
-
-
-# # Copy only production dependencies
-# COPY --from=builder /build/node_modules ./node_modules
-# COPY --from=builder /build/dist ./dist
-# COPY --from=builder /build/package.json ./
-# COPY --from=builder /build/src/model ./src/model
-
-# EXPOSE 3000
-
-# # Health check
-# HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-#   CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
-
-# # Start application
-# CMD ["node", "dist/main.js"]
-
 # 1️⃣ Build stage
 FROM node:18-bullseye AS builder
 
@@ -57,39 +16,51 @@ COPY . ./
 RUN npm run build
 
 # 2️⃣ Runtime stage
-FROM node:18-bullseye
+FROM node:18-bullseye-slim  # Use slim version to save space
 
 WORKDIR /app
 
-# Install Python + pip + build tools
+# Install Python + pip + build tools (minimal)
 RUN apt-get update && \
-    apt-get install -y python3 python3-venv python3-pip build-essential && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Create Python virtual environment
 RUN python3 -m venv /venv
 
-# Upgrade pip & install Python packages
+# Upgrade pip & install Python packages (with specific versions)
 RUN /venv/bin/pip install --upgrade pip
-RUN /venv/bin/pip install pillow tensorflow numpy
+RUN /venv/bin/pip install --no-cache-dir \
+    pillow==10.0.0 \
+    numpy==1.24.3 \
+    tensorflow-cpu==2.13.0  # Use CPU-only version for Render
 
 # Make venv Python the default
 ENV PATH="/venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+ENV NODE_ENV=production
 
 # Copy Node build and dependencies from builder stage
 COPY --from=builder /build/node_modules ./node_modules
 COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/package.json ./
 
-# Copy Python model scripts
+# Copy Python model scripts and model file
 COPY src/model ./src/model
 
+# Verify model exists
+RUN ls -la ./src/model/
+
+# Expose port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
+# Health check (simplified)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://localhost:3000').then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"
 
 # Start application
 CMD ["node", "dist/main.js"]
