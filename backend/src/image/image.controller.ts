@@ -142,8 +142,8 @@ export class ImageControllerr {
 
       // Use absolute path to python3 - more reliable than relying on PATH
       const pythonPath = process.env.NODE_ENV === 'production' 
-  ? 'python3'
-  : 'python';
+  ? '/venv/bin/python'  // venv Python
+  : 'python';            // local dev Python
       console.log('Using Python at:', pythonPath);
       
       // Ensure Python script runs with UTF-8 encoding by setting the environment variable
