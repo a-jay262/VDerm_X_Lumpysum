@@ -159,7 +159,7 @@ export class ImageControllerr {
         };
         
         console.log('Executing command:', command);
-        console.log('With environment PATH:', env.PATH);
+        // console.log('With environment PATH:', env.PATH);
         
         exec(command, { 
           encoding: 'utf8', 
