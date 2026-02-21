@@ -1,66 +1,64 @@
-# 1️⃣ Build stage
+# Build stage
 FROM node:18-bullseye AS builder
 
 WORKDIR /build
 
 # Copy package files
-COPY package.json package-lock.json ./
+COPY backend/package*.json ./
 
 # Install Node dependencies
 RUN npm install
 
-# Copy all source code
-COPY . ./
+# Copy backend source code
+COPY backend/ .
 
-# Build TypeScript
+# Build the NestJS application
 RUN npm run build
 
-# 2️⃣ Runtime stage
-FROM node:18-bullseye-slim  # Use slim version to save space
+# Runtime stage
+FROM node:18-bullseye-slim
 
 WORKDIR /app
 
-# Install Python + pip + build tools (minimal)
+# Install Python and dependencies for ML model
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
-    && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create Python virtual environment
-RUN python3 -m venv /venv
+# Create virtual environment and install Python packages
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Upgrade pip & install Python packages (with specific versions)
-RUN /venv/bin/pip install --upgrade pip
-RUN /venv/bin/pip install --no-cache-dir \
-    pillow==10.0.0 \
-    numpy==1.24.3 \
-    tensorflow-cpu==2.13.0  # Use CPU-only version for Render
+# Install Python dependencies (matching your requirements)
+RUN pip install --no-cache-dir \
+    tensorflow==2.20.0 \
+    numpy==1.26.4 \
+    Pillow==10.2.0
 
-# Make venv Python the default
-ENV PATH="/venv/bin:$PATH"
-ENV PYTHONUNBUFFERED=1
-ENV NODE_ENV=production
-
-# Copy Node build and dependencies from builder stage
+# Copy built application from builder
 COPY --from=builder /build/node_modules ./node_modules
 COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/package.json ./
 
-# Copy Python model scripts and model file
-COPY src/model ./src/model
+# Copy model files (ensure they're in the correct location)
+COPY backend/src/model ./src/model
 
-# Verify model exists
-RUN ls -la ./src/model/
+# Copy .env.example as .env (you'll override with Render env vars)
+COPY backend/.env.example .env
 
-# Expose port
+# Set production environment
+ENV NODE_ENV=production
+ENV PYTHONUNBUFFERED=1
+
+# Expose the port
 EXPOSE 3000
 
-# Health check (simplified)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD node -e "fetch('http://localhost:3000').then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode !== 200 ? 1 : 0)})" || exit 1
 
-# Start application
+# Start the application
 CMD ["node", "dist/main.js"]
