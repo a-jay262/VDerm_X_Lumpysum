@@ -3,14 +3,14 @@ FROM node:18-bullseye AS builder
 
 WORKDIR /build
 
-# Copy package files
-COPY backend/package*.json ./
+# Copy package files (from backend directory in repo root)
+COPY package*.json ./
 
 # Install Node dependencies
 RUN npm install
 
-# Copy backend source code
-COPY backend/ .
+# Copy all backend source code
+COPY . .
 
 # Build the NestJS application
 RUN npm run build
@@ -32,7 +32,7 @@ RUN apt-get update && \
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Python dependencies (matching your requirements)
+# Install Python dependencies
 RUN pip install --no-cache-dir \
     tensorflow==2.20.0 \
     numpy==1.26.4 \
@@ -43,11 +43,11 @@ COPY --from=builder /build/node_modules ./node_modules
 COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/package.json ./
 
-# Copy model files (ensure they're in the correct location)
-COPY backend/src/model ./src/model
+# Copy model files - FIXED: Remove 'backend/' prefix
+COPY src/model ./src/model
 
-# Copy .env.example as .env (you'll override with Render env vars)
-COPY backend/.env.example .env
+# Copy .env.example - FIXED: Remove 'backend/' prefix
+# COPY .env.example .env
 
 # Set production environment
 ENV NODE_ENV=production
