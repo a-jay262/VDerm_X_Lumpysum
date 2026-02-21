@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, Button, Image, StyleSheet, Alert, ActivityIndicator, Text, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Button,
+  Image,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { BASE_URL } from "../config";
@@ -27,11 +37,19 @@ const DiagnosticScreen = () => {
 
   const handleImagePick = async (type: "camera" | "gallery") => {
     try {
-      const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-      const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const cameraPermission =
+        await ImagePicker.requestCameraPermissionsAsync();
+      const libraryPermission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      if (cameraPermission.status !== "granted" || libraryPermission.status !== "granted") {
-        Alert.alert("Permission Denied", "We need permission to access your camera and gallery.");
+      if (
+        cameraPermission.status !== "granted" ||
+        libraryPermission.status !== "granted"
+      ) {
+        Alert.alert(
+          "Permission Denied",
+          "We need permission to access your camera and gallery.",
+        );
         return;
       }
 
@@ -52,7 +70,10 @@ const DiagnosticScreen = () => {
         setSelectedImage(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred while selecting the image.");
+      Alert.alert(
+        "Error",
+        "An unexpected error occurred while selecting the image.",
+      );
       console.error(error);
     }
   };
@@ -75,13 +96,13 @@ const DiagnosticScreen = () => {
 
     try {
       const headers: any = {};
-      
+
       if (userData?._id) {
-        headers['x-user-id'] = userData._id;
+        headers["x-user-id"] = userData._id;
       }
 
       const response = await fetch(`${BASE_URL}/images/predicts`, {
-        method: 'POST',
+        method: "POST",
         headers,
         body: formData,
       });
@@ -105,44 +126,117 @@ const DiagnosticScreen = () => {
   };
 
   const handleChatAboutResult = async () => {
-    if (!diagnosisId || !userData?._id) {
-      Alert.alert("Error", "Cannot start chat without diagnosis data");
-      return;
+  if (!diagnosisId || !userData?._id) {
+    Alert.alert("Error", "Cannot start chat without diagnosis data");
+    return;
+  }
+
+  try {
+    // Extract classification and confidence
+    const classification = 
+      predictionResult?.prediction?.classification || 
+      predictionResult?.classification || 
+      "Diagnosis";
+    
+    // Extract confidence value (handle both array and single number)
+    let confidenceValue = null;
+    
+    // Try to get confidence_score first
+    if (predictionResult.confidence_score) {
+      confidenceValue = predictionResult.confidence_score;
+    } else if (predictionResult.prediction?.confidence_score) {
+      confidenceValue = predictionResult.prediction.confidence_score;
     }
+    // If no confidence_score, try to calculate from array
+    else if (Array.isArray(predictionResult.confidence)) {
+      confidenceValue = Math.max(...predictionResult.confidence);
+    } else if (predictionResult.prediction?.confidence && 
+               Array.isArray(predictionResult.prediction.confidence)) {
+      confidenceValue = Math.max(...predictionResult.prediction.confidence);
+    }
+    
+    // Format confidence as percentage if available
+    const confidenceText = confidenceValue 
+      ? ` (${(confidenceValue * 100).toFixed(1)}% confidence)` 
+      : "";
 
-    try {
-      // Generate a descriptive title based on the prediction result
-      const classification = predictionResult?.prediction?.classification || predictionResult?.classification || "Diagnosis";
-      const title = `Chat about ${classification} Result`;
+      // console.log("Classification:", classification);
+      // console.log("Confidence value:", confidenceValue);
+    
+    // Create title with confidence
+    const title = `Chat about ${classification} Result${confidenceText}`;
 
-      const response = await fetch(`${BASE_URL}/chat/conversations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userData._id, // Backend requires userId in headers, not body
-        },
-        body: JSON.stringify({
-          diagnosisId: diagnosisId,
-          title: title,
-        }),
+    const response = await fetch(`${BASE_URL}/chat/conversations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": userData._id,
+      },
+      body: JSON.stringify({
+        diagnosisId: diagnosisId,
+        title: title,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // @ts-ignore
+      navigation.navigate("ChatConversation", {
+        conversationId: data._id,
+        title: data.title || title,
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // @ts-ignore
-        navigation.navigate("ChatConversation", {
-          conversationId: data._id,
-          title: data.title || title,
-        });
-      } else {
-        Alert.alert("Error", data.message || "Failed to create conversation");
-      }
-    } catch (error) {
-      console.error("Error creating conversation:", error);
-      Alert.alert("Error", "Failed to start chat");
+    } else {
+      Alert.alert("Error", data.message || "Failed to create conversation");
     }
-  };
+  } catch (error) {
+    console.error("Error creating conversation:", error);
+    Alert.alert("Error", "Failed to start chat");
+  }
+};
+
+  // const handleChatAboutResult = async () => {
+  //   if (!diagnosisId || !userData?._id) {
+  //     Alert.alert("Error", "Cannot start chat without diagnosis data");
+  //     return;
+  //   }
+
+  //   try {
+  //     // Generate a descriptive title based on the prediction result
+  //     const classification =
+  //       predictionResult?.prediction?.classification ||
+  //       predictionResult?.classification ||
+  //       "Diagnosis";
+  //     const title = `Chat about ${classification} Result`;
+
+  //     const response = await fetch(`${BASE_URL}/chat/conversations`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "x-user-id": userData._id, // Backend requires userId in headers, not body
+  //       },
+  //       body: JSON.stringify({
+  //         diagnosisId: diagnosisId,
+  //         title: title,
+  //       }),
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (response.ok) {
+  //       // @ts-ignore
+  //       navigation.navigate("ChatConversation", {
+  //         conversationId: data._id,
+  //         title: data.title || title,
+  //       });
+  //     } else {
+  //       Alert.alert("Error", data.message || "Failed to create conversation");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error creating conversation:", error);
+  //     Alert.alert("Error", "Failed to start chat");
+  //   }
+  // };
 
   const handleReset = () => {
     setSelectedImage(null);
@@ -152,15 +246,20 @@ const DiagnosticScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+      >
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Disease Diagnosis</Text>
-          <Text style={styles.headerSubtitle}>Upload an image for analysis</Text>
+          <Text style={styles.headerSubtitle}>
+            Upload an image for analysis
+          </Text>
         </View>
 
         {!selectedImage && !predictionResult && (
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionButton}
               onPress={() => handleImagePick("camera")}
             >
@@ -168,7 +267,7 @@ const DiagnosticScreen = () => {
               <Text style={styles.actionButtonText}>Take a Photo</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionButton}
               onPress={() => handleImagePick("gallery")}
             >
@@ -180,8 +279,11 @@ const DiagnosticScreen = () => {
 
         {selectedImage && (
           <View style={styles.imageContainer}>
-            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
-            
+            <Image
+              source={{ uri: selectedImage }}
+              style={styles.imagePreview}
+            />
+
             {!predictionResult && (
               <View style={styles.uploadButtonContainer}>
                 {loading ? (
@@ -191,13 +293,13 @@ const DiagnosticScreen = () => {
                   </View>
                 ) : (
                   <>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.uploadButton}
                       onPress={uploadImageToAPI}
                     >
                       <Text style={styles.uploadButtonText}>Analyze Image</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.cancelButton}
                       onPress={handleReset}
                     >
@@ -220,14 +322,46 @@ const DiagnosticScreen = () => {
             <View style={styles.resultCard}>
               <Text style={styles.resultLabel}>Classification:</Text>
               <Text style={styles.resultValue}>
-                {typeof predictionResult.prediction === 'object' 
-                  ? (predictionResult.prediction?.classification || 
-                     predictionResult.prediction?.prediction || "N/A")
-                  : (predictionResult.classification || predictionResult.prediction || "N/A")}
+                {typeof predictionResult.prediction === "object"
+                  ? predictionResult.prediction?.classification ||
+                    predictionResult.prediction?.prediction ||
+                    "N/A"
+                  : predictionResult.classification ||
+                    predictionResult.prediction ||
+                    "N/A"}
               </Text>
-              
+
               <Text style={styles.resultLabel}>Confidence:</Text>
               <Text style={styles.resultValue}>
+                {(() => {
+                  // Try to get confidence_score first (single value)
+                  let confidenceValue =
+                    predictionResult.confidence_score ||
+                    predictionResult.prediction?.confidence_score;
+
+                  // If no confidence_score, try to calculate from array
+                  if (!confidenceValue) {
+                    if (Array.isArray(predictionResult.confidence)) {
+                      confidenceValue = Math.max(
+                        ...predictionResult.confidence,
+                      );
+                    } else if (
+                      predictionResult.prediction?.confidence &&
+                      Array.isArray(predictionResult.prediction.confidence)
+                    ) {
+                      confidenceValue = Math.max(
+                        ...predictionResult.prediction.confidence,
+                      );
+                    }
+                  }
+
+                  console.log("Confidence value:", confidenceValue);
+                  return confidenceValue
+                    ? (confidenceValue * 100).toFixed(2) + "%"
+                    : "N/A";
+                })()}
+              </Text>
+              {/* <Text style={styles.resultValue}>
                 {(() => {
                   // Extract confidence from prediction result
                   let confidenceValue = null;
@@ -248,20 +382,26 @@ const DiagnosticScreen = () => {
                   
                   return confidenceValue ? ((confidenceValue * 100).toFixed(2) + '%') : "N/A";
                 })()}
-              </Text>
+              </Text> */}
             </View>
 
             {diagnosisId && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.chatButton}
                 onPress={handleChatAboutResult}
               >
-                <Ionicons name="chatbubble-ellipses" size={24} color="#FFFFFF" />
-                <Text style={styles.chatButtonText}>Chat about this result</Text>
+                <Ionicons
+                  name="chatbubble-ellipses"
+                  size={24}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.chatButtonText}>
+                  Chat about this result
+                </Text>
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.newAnalysisButton}
               onPress={handleReset}
             >
@@ -273,7 +413,7 @@ const DiagnosticScreen = () => {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigation.navigate("Home")}
         >
@@ -287,7 +427,7 @@ const DiagnosticScreen = () => {
           <MaterialIcons name="pets" size={28} color="#A5A5A5" />
           <Text style={styles.navTextInactive}>Vets</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigation.navigate("Diagnosis")}
         >
@@ -312,8 +452,8 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 20,
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
     marginBottom: 30,

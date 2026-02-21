@@ -18,7 +18,7 @@ export class ChatService {
     private readonly geminiService: GeminiService,
   ) {}
 
-  async createConversation(
+    async createConversation(
     userId: string,
     diagnosisId?: string,
     title?: string,
@@ -57,7 +57,16 @@ export class ChatService {
     if (diagnosisData) {
       const classification = diagnosisData.prediction?.classification || 'Unknown';
       const confidence = diagnosisData.prediction?.confidence || [];
-      const confPercent = confidence.length > 0 ? (confidence[0] * 100).toFixed(1) : 'N/A';
+      const confPercent = diagnosisData.prediction?.confidence.confidence_score 
+        ? (diagnosisData.prediction.confidence.confidence_score * 100).toFixed(1) 
+        : 'N/A';
+
+      console.log('Creating conversation with diagnosis context:', {
+        classification,
+        confidence,
+      });
+
+      console.log('CONFIDNCE SCORE:', diagnosisData.prediction?.confidence.confidence_score);
 
       const initialMessage = `I've analyzed your image and detected ${classification} with ${confPercent}% confidence. I'm here to help you understand this diagnosis and answer any questions about treatment and care. What would you like to know?`;
 
@@ -71,6 +80,66 @@ export class ChatService {
 
     return savedConversation;
   }
+
+
+  // async createConversation(
+  //   userId: string,
+  //   diagnosisId?: string,
+  //   title?: string,
+  // ): Promise<ChatConversation> {
+  //   let diagnosisData = null;
+  //   let conversationTitle = title;
+
+  //   // If diagnosisId is provided, fetch diagnosis data and generate title
+  //   if (diagnosisId) {
+  //     diagnosisData = await this.diagnosisModel.findById(diagnosisId);
+  //     if (!diagnosisData) {
+  //       throw new NotFoundException('Diagnosis not found');
+  //     }
+      
+  //     if (!conversationTitle) {
+  //       conversationTitle = await this.geminiService.generateConversationTitle(
+  //         'Diagnosis discussion',
+  //         diagnosisData,
+  //       );
+  //     }
+  //   }
+
+  //   if (!conversationTitle) {
+  //     conversationTitle = 'New Chat';
+  //   }
+
+  //   const conversation = new this.conversationModel({
+  //     userId: new Types.ObjectId(userId),
+  //     diagnosisId: diagnosisId ? new Types.ObjectId(diagnosisId) : undefined,
+  //     title: conversationTitle,
+  //   });
+
+  //   const savedConversation = await conversation.save();
+
+  //   // If linked to diagnosis, add initial system message with diagnosis context
+  //   if (diagnosisData) {
+  //     const classification = diagnosisData.prediction?.classification || 'Unknown';
+  //     const confidence = diagnosisData.prediction?.confidence || [];
+  //     const confPercent = confidence.length > 0 ? (confidence[0] * 100).toFixed(1) : 'N/A';
+
+  //     console.log('Creating conversation with diagnosis context:', {
+  //       classification,
+  //       confidence,
+  //     });
+
+  //     const initialMessage = `I've analyzed your image and detected ${classification} with ${confPercent}% confidence. I'm here to help you understand this diagnosis and answer any questions about treatment and care. What would you like to know?`;
+
+  //     await this.saveMessage(
+  //       savedConversation._id.toString(),
+  //       'assistant',
+  //       initialMessage,
+  //       { predictionData: diagnosisData.prediction },
+  //     );
+  //   }
+
+  //   return savedConversation;
+  // }
 
   async getUserConversations(userId: string): Promise<ChatConversation[]> {
     return this.conversationModel

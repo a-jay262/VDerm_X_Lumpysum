@@ -7,22 +7,23 @@ export type DiagnosisHistoryDocument = DiagnosisHistory & Document;
 @Schema({ collection: 'diagnosis_history', timestamps: true })
 export class DiagnosisHistory {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: Types.ObjectId; // User who submitted the diagnosis
+  userId: Types.ObjectId;
 
   @Prop({ required: true })
-  imageUrl: string; // Path or URL to the uploaded image
+  imageUrl: string;
 
   @Prop({ type: Object, required: true })
   prediction: {
-    classification: string; // "Lumpy Skin" or "Not Lumpy Skin"
-    confidence: number[]; // [lumpy_probability, not_lumpy_probability]
+    classification: string; // "Lumpy" or "Normal"
+    confidence: number[]; // Full probability array
+    confidence_score?: number; // Optional single value for frontend
   };
 
   @Prop({ type: Date, default: Date.now })
   timestamp: Date;
 
   @Prop({ required: false })
-  location?: string; // Optional: for tracking disease spread
+  location?: string;
 
   @Prop({ type: Date, default: Date.now })
   createdAt: Date;

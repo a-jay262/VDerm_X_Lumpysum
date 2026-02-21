@@ -6,8 +6,8 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-      "build": "nest build",
-  "start:prod": "node dist/main.js",
+    "build": "nest build",
+    "start:prod": "node dist/main.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -39,6 +39,7 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg": "^8.13.1",
+    "pip": "^0.0.1",
     "python-shell": "^5.0.0",
     "react-native-image-picker": "^7.1.2",
     "reflect-metadata": "^0.2.2",
